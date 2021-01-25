@@ -1,3 +1,4 @@
+#https://levelup.gitconnected.com/knn-failure-cases-limitations-and-strategy-to-pick-right-k-45de1b986428
 import h5py
 import sys
 import numpy as np
@@ -40,23 +41,27 @@ print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
 X_train, X_test, y_train, y_test = train_test_split(features,target, test_size=0.2)
 X_test, X_val, y_test, y_val = train_test_split(X_test,y_test, test_size=0.15)
 
-accuracy_List = []
-list_K = range(1,10)
-for i in list_K:
+accuracyList = []
+KList = range(1,10)
+for i in KList:
     knn = neighbors.KNeighborsClassifier(n_neighbors=i)
     knn.fit(X_train, y_train)
     y_pred_val = knn.predict(X_val)
-    accuracy_List.append(metrics.accuracy_score(y_val, y_pred_val))
-print(accuracy_List)
+    accuracyList.append(metrics.accuracy_score(y_val, y_pred_val))
+print(accuracyList)
 
 
 # Create a figure of size 8x6 inches, 80 dots per inch
-plt.figure(figsize=(8, 6), dpi=80)
-bx=axes([0.20,0.20,.96-0.20,0.86-0.18])
-plt.grid(linestyle='--', linewidth=0.5)
-plt.plot(list_K, accuracy_List,color="blue",linewidth=1.0,linestyle="-")
-plt.title('Accuracy sur validation test pour $K \in [1;10]$')
-bx.set_xlabel(r'$K$')
-bx.set_ylabel(r'Accuracy')
+fig = plt.figure(figsize=(8, 6), dpi=80)
+ax = fig.add_axes([0.1, 0.1, 0.8, 0.8]) # main axes
+
+
+ax.grid(linestyle='--', linewidth=0.5)
+ax.scatter(KList,accuracyList, s=100, c="red", alpha=1)
+ax.plot(KList, accuracyList,color="blue",linewidth=1.0,linestyle="-")
+ax.set_title('Accuracy sur validation test pour $K \in [1;10]$')
+
+ax.set_xlabel(r'$K$')
+ax.set_ylabel(r'Accuracy')
 
 plt.show()
