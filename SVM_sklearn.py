@@ -2,11 +2,11 @@ import h5py
 import numpy as np
 import random
 import csv
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from collections import Counter
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
 from sklearn import svm, metrics
+
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 
@@ -66,13 +66,20 @@ u_test  = U[ind_test]
 
 np.set_printoptions(threshold=np.inf)
 
+
+#SVM with sklearn
+
+#Support Vector Classification with rbf as kernel
+
 clf = svm.SVC(C=1, kernel='rbf')
 clf.fit(X_train, t_train)
 
 t_pred_without_validation = clf.predict(X_test)
 
 acc=[]
-ran=range(1,100)
+ran=range(1,20)
+
+#Validation stage to search for the best value of regularization parameter
 
 for i in ran:
 	clf = svm.SVC(C=i, kernel='rbf')
@@ -81,7 +88,8 @@ for i in ran:
 	acc.append(metrics.accuracy_score(t_val, t_pred))
 acc=np.array(acc)
 print(acc.max())
-# Create a figure of size 8x6 inches, 80 dots per inch
+
+'''# Create a figure of size 8x6 inches, 80 dots per inch
 fig = plt.figure(figsize=(8, 6), dpi=80)
 ax = fig.add_axes([0.1, 0.1, 0.8, 0.8]) # main axes
 
@@ -94,29 +102,63 @@ ax.set_title('Accuracy par rapport à la regularization C.')
 ax.set_xlabel(r'Parametre de regularization')
 ax.set_ylabel(r'Accuracy')
 
-#plt.show()	
+#plt.show()'''	
 
 clf = svm.SVC(C=ran[np.where(acc==acc.max())[0][0]-1], kernel='rbf')
 clf.fit(X_train, t_train)
 t_pred_val = clf.predict(X_test)
-print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
-print("Accuracy with validation:",metrics.accuracy_score(t_test, t_pred_val))
+'''print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
+print("Accuracy with validation:",metrics.accuracy_score(t_test, t_pred_val))'''
 
 clf = svm.SVC(C=1)
-scores = cross_val_score(clf,X_train,t_train,cv=10)
+scores = cross_val_score(clf,X_train,t_train,cv=5)
 print(scores)
+print("%0.2f accuracy with a standard deviation of %0.2f"%(scores.mean(), scores.std()))
 
+tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C':[1, 10, 100 ,1000]}]
+
+scores = ['precision', 'recall']
+
+for score in scores:
+    print("# Tuning hyper-parameters for %s" % score)
+    print()
+
+    clf = GridSearchCV(
+        svm.SVC(), tuned_parameters, scoring='%s_macro' % score
+    )
+    clf.fit(X_train, t_train)
+
+    print("Best parameters set found on development set:")
+    print()
+    print(clf.best_params_)
+    print()
+    print("Grid scores on development set:")
+    print()
+    means = clf.cv_results_['mean_test_score']
+    stds = clf.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r"
+              % (mean, std * 2, params))
+    print()
+
+    print("Detailed classification report:")
+    print()
+    print("The model is trained on the full development set.")
+    print("The scores are computed on the full evaluation set.")
+    print()
+    t_true, t_pred = t_test, clf.predict(X_test)
+    print(metrics.classification_report(t_true, t_pred))
+    print()
+
+print(clf.best_params_)
+clf = svm.SVC(C=clf.best_params_['C'],kernel=clf.best_params_['kernel'],gamma=clf.best_params_['gamma'])
+clf.fit(X_train, t_train)
+t_pred_cross_val = clf.predict(X_test)
+
+print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
+print("Accuracy after validation:",metrics.accuracy_score(t_test, t_pred_val))
+print("Accuracy after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
 '''X_test_u = X_test[u_test==user]
 
 t_pred_u = clf.predict(X_test_u)
 print(str("Accuracy for user "+str(user)+" only :"),metrics.accuracy_score(t_test[u_test==user], t_pred_u))'''
-
-'''clf = svm.SVC(kernel='precomputed')
-#linear kernel computation
-gram_train = np.dot(np.array(X_train).transpose(), t_train)
-clf.fit(gram_train, t_train)
-
-gram_test = np.dot(np.array(X_test).transpose(), t_test)
-
-t_pred_linear = clf.predict(gram_test)
-print("Accuracy with linear kernel function:",metrics.accuracy_score(u_test, t_pred_linear))'''
