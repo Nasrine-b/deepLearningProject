@@ -175,13 +175,16 @@ for score in scores:
 clf = svm.SVC(C=clf.best_params_['C'],kernel=clf.best_params_['kernel'],gamma=clf.best_params_['gamma'])
 clf.fit(X_train, t_train)
 t_pred_cross_val = clf.predict(X_test)
+t_train_cross_val = clf.predict(X_train)
 
-print("Accuracy without validation stage:",acc_without_validation)
+print("Accuracy test without validation stage:",acc_without_validation)
 print(report_without_validation)
-print("Accuracy after validation:",acc_val)
+print("Accuracy test after validation:",acc_val)
 print(report_with_validation)
-print("Accuracy after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
+print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
 print(classification_report(t_test,t_pred_cross_val))
+print("Accuracy train after cross-validation:",metrics.accuracy_score(t_train, t_train_cross_val))
+print(classification_report(t_train, t_train_cross_val))
 
 
 '''X_test_u = X_test[u_test==user]
