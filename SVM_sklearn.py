@@ -75,6 +75,7 @@ clf = svm.SVC(C=1, kernel='rbf')
 clf.fit(X_train, t_train)
 
 t_pred_without_validation = clf.predict(X_test)
+acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
 
 acc=[]
 ran=range(1,20)
@@ -87,7 +88,7 @@ for i in ran:
 	t_pred = clf.predict(X_val)
 	acc.append(metrics.accuracy_score(t_val, t_pred))
 acc=np.array(acc)
-print(acc.max())
+#print(acc.max())
 
 '''# Create a figure of size 8x6 inches, 80 dots per inch
 fig = plt.figure(figsize=(8, 6), dpi=80)
@@ -107,17 +108,35 @@ ax.set_ylabel(r'Accuracy')
 clf = svm.SVC(C=ran[np.where(acc==acc.max())[0][0]-1], kernel='rbf')
 clf.fit(X_train, t_train)
 t_pred_val = clf.predict(X_test)
+acc_val = metrics.accuracy_score(t_test, t_pred_val)
 '''print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
 print("Accuracy with validation:",metrics.accuracy_score(t_test, t_pred_val))'''
 
-clf = svm.SVC(C=1)
+'''clf = svm.SVC(C=1)
 scores = cross_val_score(clf,X_train,t_train,cv=5)
-print(scores)
-print("%0.2f accuracy with a standard deviation of %0.2f"%(scores.mean(), scores.std()))
+#print(scores)
+#print("%0.2f accuracy with a standard deviation of %0.2f"%(scores.mean(), scores.std()))'''
+
+#--------------------CROSS VALIDATION-------------------------------
 
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C':[1, 10, 100 ,1000]}]
 
 scores = ['precision', 'recall']
+
+ind_all = np.arange(X.shape[0])
+
+ind_train, ind_test = train_test_split(ind_all,
+                                       shuffle=True,
+                                       stratify=T[ind_all],
+                                       test_size=0.3,
+                                       random_state=42)
+
+X_train = X[ind_train,:]
+X_test  = X[ind_test,:]
+t_train = T[ind_train]
+t_test  = T[ind_test]
+u_train = U[ind_train]
+u_test  = U[ind_test]
 
 for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
@@ -150,14 +169,15 @@ for score in scores:
     print(metrics.classification_report(t_true, t_pred))
     print()
 
-print(clf.best_params_)
 clf = svm.SVC(C=clf.best_params_['C'],kernel=clf.best_params_['kernel'],gamma=clf.best_params_['gamma'])
 clf.fit(X_train, t_train)
 t_pred_cross_val = clf.predict(X_test)
 
-print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
-print("Accuracy after validation:",metrics.accuracy_score(t_test, t_pred_val))
+print("Accuracy without validation stage:",acc_without_validation)
+print("Accuracy after validation:",acc_val)
 print("Accuracy after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
+
+
 '''X_test_u = X_test[u_test==user]
 
 t_pred_u = clf.predict(X_test_u)
