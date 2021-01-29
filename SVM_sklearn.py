@@ -3,6 +3,7 @@ import numpy as np
 import random
 import csv
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.metrics import classification_report, confusion_matrix
 from collections import Counter
 from sklearn.datasets import make_classification
 from sklearn import svm, metrics
@@ -76,6 +77,7 @@ clf.fit(X_train, t_train)
 
 t_pred_without_validation = clf.predict(X_test)
 acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
+report_without_validation = classification_report(t_test,t_pred_without_validation)
 
 acc=[]
 ran=range(1,20)
@@ -109,6 +111,7 @@ clf = svm.SVC(C=ran[np.where(acc==acc.max())[0][0]-1], kernel='rbf')
 clf.fit(X_train, t_train)
 t_pred_val = clf.predict(X_test)
 acc_val = metrics.accuracy_score(t_test, t_pred_val)
+report_with_validation = classification_report(t_test,t_pred_val)
 '''print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
 print("Accuracy with validation:",metrics.accuracy_score(t_test, t_pred_val))'''
 
@@ -172,10 +175,16 @@ for score in scores:
 clf = svm.SVC(C=clf.best_params_['C'],kernel=clf.best_params_['kernel'],gamma=clf.best_params_['gamma'])
 clf.fit(X_train, t_train)
 t_pred_cross_val = clf.predict(X_test)
+t_train_cross_val = clf.predict(X_train)
 
-print("Accuracy without validation stage:",acc_without_validation)
-print("Accuracy after validation:",acc_val)
-print("Accuracy after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
+print("Accuracy test without validation stage:",acc_without_validation)
+print(report_without_validation)
+print("Accuracy test after validation:",acc_val)
+print(report_with_validation)
+print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
+print(classification_report(t_test,t_pred_cross_val))
+print("Accuracy train after cross-validation:",metrics.accuracy_score(t_train, t_train_cross_val))
+print(classification_report(t_train, t_train_cross_val))
 
 
 '''X_test_u = X_test[u_test==user]
