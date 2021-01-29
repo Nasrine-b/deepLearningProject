@@ -72,12 +72,7 @@ np.set_printoptions(threshold=np.inf)
 
 #Support Vector Classification with rbf as kernel
 
-clf = svm.SVC(C=1, kernel='rbf')
-clf.fit(X_train, t_train)
-
-t_pred_without_validation = clf.predict(X_test)
-acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
-report_without_validation = classification_report(t_test,t_pred_without_validation)
+#-------------VALIDATION-----------------
 
 acc=[]
 ran=range(1,20)
@@ -120,11 +115,7 @@ scores = cross_val_score(clf,X_train,t_train,cv=5)
 #print(scores)
 #print("%0.2f accuracy with a standard deviation of %0.2f"%(scores.mean(), scores.std()))'''
 
-#--------------------CROSS VALIDATION-------------------------------
-
-tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C':[1, 10, 100 ,1000]}]
-
-scores = ['precision', 'recall']
+#---------------WITHOUT VALIDATION-------------------
 
 ind_all = np.arange(X.shape[0])
 
@@ -140,6 +131,19 @@ t_train = T[ind_train]
 t_test  = T[ind_test]
 u_train = U[ind_train]
 u_test  = U[ind_test]
+
+clf = svm.SVC(C=1, kernel='rbf')
+clf.fit(X_train, t_train)
+
+t_pred_without_validation = clf.predict(X_test)
+acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
+report_without_validation = classification_report(t_test,t_pred_without_validation)
+
+#--------------------CROSS VALIDATION-------------------------------
+
+tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C':[1, 10, 100 ,1000]}]
+
+scores = ['precision', 'recall']
 
 for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
