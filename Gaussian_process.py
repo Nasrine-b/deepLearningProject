@@ -9,6 +9,7 @@ from sklearn.datasets import make_classification
 from sklearn import metrics
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
+from time import time
 
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
@@ -88,11 +89,65 @@ t_test  = T[ind_test]
 u_train = U[ind_train]
 u_test  = U[ind_test]
 
+t0 = time()
 kernel = 1.0 * RBF(1.0)
-gpc = GaussianProcessClassifier()
+gpc = GaussianProcessClassifier(kernel=kernel,multi_class='one_vs_one',n_restarts_optimizer=10,max_iter_predict=100,n_jobs=5)
 gpc.fit(X_train, t_train)
 t_pred_without_validation = gpc.predict(X_test)
 acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
 report_without_validation = classification_report(t_test,t_pred_without_validation)
-print(acc_without_validation)
+t1 = time()
+time_class_without_validation = t1-t0
+
+#--------------------CROSS VALIDATION-------------------------------
+
+tuned_parameters = [{'kernel': [1.0 * RBF(1.0), 2.0 * RBF(1.0), 5.0 * RBF(1.0), 10.0 * RBF(1.0)], 'multi_class': ['one_vs_one'], 'n_restarts_optimizer':[10], 'n_jobs':[5]}]
+
+scores = ['precision', 'recall']
+
+t0 = time()
+
+for score in scores:
+    print("# Tuning hyper-parameters for %s" % score)
+    print()
+
+    gpc = GridSearchCV(
+        GaussianProcessClassifier(), tuned_parameters, scoring='%s_macro' % score
+    )
+    gpc.fit(X_train, t_train)
+
+    print("Best parameters set found on development set:")
+    print()
+    print(gpc.best_params_)
+    print()
+    print("Grid scores on development set:")
+    print()
+    means = gpc.cv_results_['mean_test_score']
+    stds = gpc.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, gpc.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r"
+              % (mean, std * 2, params))
+    print()
+
+    print("Detailed classification report:")
+    print()
+    print("The model is trained on the full development set.")
+    print("The scores are computed on the full evaluation set.")
+    print()
+    t_true, t_pred = t_test, gpc.predict(X_test)
+    print(metrics.classification_report(t_true, t_pred))
+    print()
+
+
+gpc = GaussianProcessClassifier(multi_class=gpc.best_params_['multi_class'],kernel=gpc.best_params_['kernel'],n_restarts_optimizer=gpc.best_params_['n_restarts_optimizer'],n_jobs=5)
+gpc.fit(X_train, t_train)
+t_pred_cross_val = gpc.predict(X_test)
+t1 = time()
+time_class_with_cross_validation = t1 - t0
+
+print("Accuracy test without validation stage:",acc_without_validation)
 print(report_without_validation)
+print("Time exec : ", time_class_without_validation)
+print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
+print(classification_report(t_test,t_pred_cross_val))
+print("Time exec : ", time_class_with_cross_validation)
