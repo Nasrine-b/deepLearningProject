@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from collections import Counter
 from sklearn.datasets import make_classification
 from sklearn import svm, metrics
+from time import time
 
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
@@ -78,12 +79,14 @@ acc=[]
 ran=range(1,20)
 
 #Validation stage to search for the best value of regularization parameter
-
+t0 = time()
 for i in ran:
 	clf = svm.SVC(C=i, kernel='rbf')
 	clf.fit(X_train, t_train)
 	t_pred = clf.predict(X_val)
 	acc.append(metrics.accuracy_score(t_val, t_pred))
+t1 = time()
+time_simple_val = t1 -t0
 acc=np.array(acc)
 #print(acc.max())
 
@@ -103,8 +106,17 @@ ax.set_ylabel(r'Accuracy')
 #plt.show()'''	
 
 clf = svm.SVC(C=ran[np.where(acc==acc.max())[0][0]-1], kernel='rbf')
+
+t0=time()
 clf.fit(X_train, t_train)
+t1=time()
+time_train_with_validation = t1 - t0
+
+t0=time()
 t_pred_val = clf.predict(X_test)
+t1=time()
+time_test_with_validation = t1 - t0
+
 acc_val = metrics.accuracy_score(t_test, t_pred_val)
 report_with_validation = classification_report(t_test,t_pred_val)
 '''print("Accuracy without validation stage:",metrics.accuracy_score(t_test, t_pred_without_validation))
@@ -133,9 +145,17 @@ u_train = U[ind_train]
 u_test  = U[ind_test]
 
 clf = svm.SVC(C=1, kernel='rbf')
-clf.fit(X_train, t_train)
 
+t0=time()
+clf.fit(X_train, t_train)
+t1=time()
+time_train_without_validation = t1 -t0
+
+t0=time()
 t_pred_without_validation = clf.predict(X_test)
+t1=time()
+time_test_without_validation = t1 - t0
+
 acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
 report_without_validation = classification_report(t_test,t_pred_without_validation)
 
@@ -144,6 +164,8 @@ report_without_validation = classification_report(t_test,t_pred_without_validati
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-1, 1e-2, 1e-3, 1e-4], 'C':[1, 10, 100 ,1000]}]
 
 scores = ['precision', 'recall']
+
+t0=time()
 
 for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
@@ -176,20 +198,41 @@ for score in scores:
     print(metrics.classification_report(t_true, t_pred))
     print()
 
+t1=time()
+time_cross_val=t1-t0
+
 clf = svm.SVC(C=clf.best_params_['C'],kernel=clf.best_params_['kernel'],gamma=clf.best_params_['gamma'])
+
+t0=time()
 clf.fit(X_train, t_train)
+t1=time()
+time_train_with_cross_validation = t1 -t0
+
+t0=time()
 t_pred_cross_val = clf.predict(X_test)
+t1=time()
+time_test_with_cross_validation = t1 - t0
 t_train_cross_val = clf.predict(X_train)
 
 print("Accuracy test without validation stage:",acc_without_validation)
 print(report_without_validation)
+print('Time train exec : ',time_train_without_validation)
+print('Time test exec : ',time_test_without_validation)
 print("Accuracy test after validation:",acc_val)
 print(report_with_validation)
+print('Time train exec : ',time_train_with_validation)
+print('Time test exec : ',time_test_with_validation)
+print('Time simple validation exec : ',time_simple_val)
 print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
 print(classification_report(t_test,t_pred_cross_val))
+print('Time train exec : ',time_train_with_cross_validation)
+print('Time test exec : ',time_test_with_cross_validation)
+print('Time simple validation exec : ',time_cross_val)
+
+'''
 print("Accuracy train after cross-validation:",metrics.accuracy_score(t_train, t_train_cross_val))
 print(classification_report(t_train, t_train_cross_val))
-
+'''
 
 '''X_test_u = X_test[u_test==user]
 

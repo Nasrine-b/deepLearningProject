@@ -89,15 +89,20 @@ t_test  = T[ind_test]
 u_train = U[ind_train]
 u_test  = U[ind_test]
 
-t0 = time()
+
 kernel = 1.0 * RBF(1.0)
 gpc = GaussianProcessClassifier(kernel=kernel,multi_class='one_vs_one',n_restarts_optimizer=10,max_iter_predict=100,n_jobs=5)
+t0 = time()
 gpc.fit(X_train, t_train)
+t1 = time()
+time_train_without_validation = t1-t0
+t0 = time()
 t_pred_without_validation = gpc.predict(X_test)
+t1 = time()
+time_test_without_validation = t1-t0
 acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
 report_without_validation = classification_report(t_test,t_pred_without_validation)
-t1 = time()
-time_class_without_validation = t1-t0
+
 
 #--------------------CROSS VALIDATION-------------------------------
 
@@ -138,16 +143,29 @@ for score in scores:
     print(metrics.classification_report(t_true, t_pred))
     print()
 
+t1 = time()
+time_cross_val = t1 - t0
+print(gpc.best_params_)
 
 gpc = GaussianProcessClassifier(multi_class=gpc.best_params_['multi_class'],kernel=gpc.best_params_['kernel'],n_restarts_optimizer=gpc.best_params_['n_restarts_optimizer'],n_jobs=5)
+#gpc = GaussianProcessClassifier(kernel=(1.41*1.41)*RBF(1.0), multi_class='one_vs_one', n_jobs=5,n_restarts_optimizer=10)
+t0 = time()
 gpc.fit(X_train, t_train)
+t1 = time()
+time_train_with_cross_validation = t1 - t0
+
+t0 = time()
 t_pred_cross_val = gpc.predict(X_test)
 t1 = time()
-time_class_with_cross_validation = t1 - t0
+time_test_with_cross_validation = t1 - t0
+
 
 print("Accuracy test without validation stage:",acc_without_validation)
 print(report_without_validation)
-print("Time exec : ", time_class_without_validation)
+print("Time train exec : ", time_train_without_validation)
+print("Time test exec : ", time_test_without_validation)
 print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
 print(classification_report(t_test,t_pred_cross_val))
-print("Time exec : ", time_class_with_cross_validation)
+print("Time train exec : ", time_train_with_cross_validation)
+print("Time test exec : ", time_test_with_cross_validation)
+print("Time cross val exec : ", time_cross_val)
