@@ -78,7 +78,7 @@ ind_all = ind_all[U[ind_all]!=user]
 ind_train, ind_test = train_test_split(ind_all,
                                        shuffle=True,
                                        stratify=T[ind_all],
-                                       test_size=720,
+                                       test_size=600,
                                        random_state=42)
 
 ind_test = np.concatenate((ind_test, ind_all_u))
@@ -91,8 +91,8 @@ u_train = U[ind_train]
 u_test  = U[ind_test]
 
 
-kernel = 1.0 * RBF(1.0)
-gpc = GaussianProcessClassifier(kernel=kernel,multi_class='one_vs_one',n_restarts_optimizer=10,max_iter_predict=100,n_jobs=10)
+'''kernel = 1.0 * RBF(1.0)
+gpc = GaussianProcessClassifier(kernel=kernel,multi_class='one_vs_one',n_restarts_optimizer=10,max_iter_predict=100,n_jobs=5)
 t0 = time()
 gpc.fit(X_train, t_train)
 t1 = time()
@@ -103,7 +103,7 @@ t1 = time()
 time_test_without_validation = t1-t0
 acc_without_validation = metrics.accuracy_score(t_test, t_pred_without_validation)
 report_without_validation = classification_report(t_test,t_pred_without_validation)
-
+'''
 
 #--------------------CROSS VALIDATION-------------------------------
 
@@ -163,10 +163,10 @@ t1 = time()
 time_test_with_cross_validation = t1 - t0
 
 
-print("Accuracy test without validation stage:",acc_without_validation)
+'''print("Accuracy test without validation stage:",acc_without_validation)
 print(report_without_validation)
 print("Time train exec : ", time_train_without_validation)
-print("Time test exec : ", time_test_without_validation)
+print("Time test exec : ", time_test_without_validation)'''
 print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test[u_test!=user], t_pred_cross_val))
 print(classification_report(t_test[u_test!=user],t_pred_cross_val))
 print("Time train exec : ", time_train_with_cross_validation)

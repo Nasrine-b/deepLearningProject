@@ -128,15 +128,20 @@ scores = cross_val_score(clf,X_train,t_train,cv=5)
 #print("%0.2f accuracy with a standard deviation of %0.2f"%(scores.mean(), scores.std()))'''
 
 #---------------WITHOUT VALIDATION-------------------
+user = 8
 
 ind_all = np.arange(X.shape[0])
 ind_all_u = ind_all[U[ind_all]==user]
 ind_all = ind_all[U[ind_all]!=user]
 
+#720 for user 8 
+test_size = ((len(U) * 30) // 100) - sum(U==user)
+print(test_size)
+
 ind_train, ind_test = train_test_split(ind_all,
                                        shuffle=True,
                                        stratify=T[ind_all],
-                                       test_size=720,
+                                       test_size=test_size,
                                        random_state=42)
 
 ind_test = np.concatenate((ind_test, ind_all_u))
@@ -147,6 +152,8 @@ t_train = T[ind_train]
 t_test  = T[ind_test]
 u_train = U[ind_train]
 u_test  = U[ind_test]
+
+print(X_train.shape[0])
 
 clf = svm.SVC(C=1, kernel='rbf')
 
