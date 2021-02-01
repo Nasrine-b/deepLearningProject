@@ -130,12 +130,16 @@ scores = cross_val_score(clf,X_train,t_train,cv=5)
 #---------------WITHOUT VALIDATION-------------------
 
 ind_all = np.arange(X.shape[0])
+ind_all_u = ind_all[U[ind_all]==user]
+ind_all = ind_all[U[ind_all]!=user]
 
 ind_train, ind_test = train_test_split(ind_all,
                                        shuffle=True,
                                        stratify=T[ind_all],
-                                       test_size=0.3,
+                                       test_size=720,
                                        random_state=42)
+
+ind_test = np.concatenate((ind_test, ind_all_u))
 
 X_train = X[ind_train,:]
 X_test  = X[ind_test,:]
@@ -208,8 +212,10 @@ clf.fit(X_train, t_train)
 t1=time()
 time_train_with_cross_validation = t1 -t0
 
+X_test_without_user = X_test[u_test!=user]
+
 t0=time()
-t_pred_cross_val = clf.predict(X_test)
+t_pred_cross_val = clf.predict(X_test_without_user)
 t1=time()
 time_test_with_cross_validation = t1 - t0
 t_train_cross_val = clf.predict(X_train)
@@ -223,18 +229,26 @@ print(report_with_validation)
 print('Time train exec : ',time_train_with_validation)
 print('Time test exec : ',time_test_with_validation)
 print('Time simple validation exec : ',time_simple_val)
-print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test, t_pred_cross_val))
-print(classification_report(t_test,t_pred_cross_val))
+print("Accuracy test after cross-validation:",metrics.accuracy_score(t_test[u_test!=user], t_pred_cross_val))
+print(classification_report(t_test[u_test!=user],t_pred_cross_val))
 print('Time train exec : ',time_train_with_cross_validation)
 print('Time test exec : ',time_test_with_cross_validation)
-print('Time simple validation exec : ',time_cross_val)
+print('Time cross validation exec : ',time_cross_val)
+print()
+
 
 '''
 print("Accuracy train after cross-validation:",metrics.accuracy_score(t_train, t_train_cross_val))
 print(classification_report(t_train, t_train_cross_val))
 '''
 
-'''X_test_u = X_test[u_test==user]
+X_test_u = X_test[u_test==user]
 
+t0=time()
 t_pred_u = clf.predict(X_test_u)
-print(str("Accuracy for user "+str(user)+" only :"),metrics.accuracy_score(t_test[u_test==user], t_pred_u))'''
+t1=time()
+time_new_user_pred = t1-t0
+print(str("Accuracy for user "+str(user)+" only :"),metrics.accuracy_score(t_test[u_test==user], t_pred_u))
+print(classification_report(t_test[u_test==user],t_pred_u))
+print("Time new user : ",time_new_user_pred)
+
